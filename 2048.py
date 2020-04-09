@@ -1,3 +1,5 @@
+import os
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = 'hide'
 import sys, random, pygame
 from random import randint
 from pygame import gfxdraw, Rect, Color
@@ -7,6 +9,8 @@ clock = pygame.time.Clock()
 size = width, height = 800, 600
 screen = pygame.display.set_mode(size)
 pygame.display.set_caption('2048 AI')
+
+animSpeed = 5
 
 font55 = pygame.font.Font('font.ttf', 55)
 font45 = pygame.font.Font('font.ttf', 45)
@@ -45,6 +49,7 @@ def roundedRect(x, y, width, height, radius, color):
     pygame.gfxdraw.aacircle(screen, x + width - radius - 1, y + radius, radius, colors[color])
 
 def moveUp(grid):
+    newDir = [[-1 for x in range(4)] for y in range(4)]
     changed = False
     done = [[False for x in range(4)] for y in range(4)]
     for y in range(1, 4):
@@ -57,14 +62,24 @@ def moveUp(grid):
                 done[ny][x] = True
                 grid[y][x].value = None
                 changed = True
+                newDir[ny][x] = y * 4 + x
             elif y != ny + 1:
                 grid[ny + 1][x].value = grid[y][x].value
                 grid[y][x].value = None
                 changed = True
-    if changed: grid = spawnTile(grid)
+                newDir[ny + 1][x] = y * 4 + x
+    if changed:
+        grid = resetTimer(grid)
+        for y in range(4):
+            for x in range(4):
+                if newDir[y][x] != -1:
+                    grid[y][x].moving = newDir[y][x]
+                    grid[y][x].timer = animSpeed
+        grid = spawnTile(grid)
     return grid
     
 def moveDown(grid):
+    newDir = [[-1 for x in range(4)] for y in range(4)]
     changed = False
     done = [[False for x in range(4)] for y in range(4)]
     for y in range(2, -1, -1):
@@ -77,14 +92,24 @@ def moveDown(grid):
                 done[ny][x] = True
                 grid[y][x].value = None
                 changed = True
+                newDir[ny][x] = y * 4 + x
             elif y != ny - 1:
                 grid[ny - 1][x].value = grid[y][x].value
                 grid[y][x].value = None
                 changed = True
-    if changed: grid = spawnTile(grid)
+                newDir[ny - 1][x] = y * 4 + x
+    if changed:
+        grid = resetTimer(grid)
+        for y in range(4):
+            for x in range(4):
+                if newDir[y][x] != -1:
+                    grid[y][x].moving = newDir[y][x]
+                    grid[y][x].timer = animSpeed
+        grid = spawnTile(grid)
     return grid
     
 def moveLeft(grid):
+    newDir = [[-1 for x in range(4)] for y in range(4)]
     changed = False
     done = [[False for x in range(4)] for y in range(4)]
     for x in range(1, 4):
@@ -97,14 +122,24 @@ def moveLeft(grid):
                 done[y][nx] = True
                 grid[y][x].value = None
                 changed = True
+                newDir[y][nx] = y * 4 + x
             elif x != nx + 1:
                 grid[y][nx + 1].value = grid[y][x].value
                 grid[y][x].value = None
                 changed = True
-    if changed: grid = spawnTile(grid)
+                newDir[y][nx + 1] = y * 4 + x
+    if changed:
+        grid = resetTimer(grid)
+        for y in range(4):
+            for x in range(4):
+                if newDir[y][x] != -1:
+                    grid[y][x].moving = newDir[y][x]
+                    grid[y][x].timer = animSpeed
+        grid = spawnTile(grid)
     return grid
 
 def moveRight(grid):
+    newDir = [[-1 for x in range(4)] for y in range(4)]
     changed = False
     done = [[False for x in range(4)] for y in range(4)]
     for x in range(2, -1, -1):
@@ -117,30 +152,66 @@ def moveRight(grid):
                 done[y][nx] = True
                 grid[y][x].value = None
                 changed = True
+                newDir[y][nx] = y * 4 + x
             elif x != nx - 1:
                 grid[y][nx - 1].value = grid[y][x].value
                 grid[y][x].value = None
                 changed = True
-    if changed: grid = spawnTile(grid)
+                newDir[y][nx - 1] = y * 4 + x
+    if changed:
+        grid = resetTimer(grid)
+        for y in range(4):
+            for x in range(4):
+                if newDir[y][x] != -1:
+                    grid[y][x].moving = newDir[y][x]
+                    grid[y][x].timer = animSpeed
+        grid = spawnTile(grid)
     return grid
 
 def spawnTile(grid):
     new = randint(0, 15)
     while grid[new // 4][new % 4].value: new = randint(0, 15)
     grid[new // 4][new % 4].value = 2 if randint(0, 99) < 90 else 4
+    grid[new // 4][new % 4].new = animSpeed + animSpeed
+    return grid
+
+def resetTimer(grid):
+    for y in range(4):
+        for x in range(4):
+            grid[y][x].moving = -1
+            grid[y][x].timer = 0
+            grid[y][x].new = 0
     return grid
 
 class Tile:
     value = None
     x = None
     y = None
+    moving = -1
+    timer = 0
+    new = 0
     def __init__(self, x, y, value):
         self.x = x
         self.y = y
         self.value = value
     def draw(self):
-        roundedRect((screen.get_width() - 470) // 2 + 14 + 114 * x, (screen.get_height() - 470) // 2 + 14 + 114 * y, 100, 100, 6, 'empty' if not self.value else str(self.value) if self.value <= 2048 else 'super')
-        if self.value:
+        offsetx = 0
+        offsety = 0
+        if self.moving != -1:
+            my = self.moving // 4
+            mx = self.moving % 4
+            if y == my:
+                mx -= x
+                offsetx = (mx * 114 - 14) * self.timer // animSpeed
+            elif x == mx:
+                my -= y
+                offsety = (my * 114 - 14) * self.timer // animSpeed
+
+        size = 100 * max(animSpeed - self.new, 0) // animSpeed
+        roundedRect((screen.get_width() - 470) // 2 + 14 + 114 * x, (screen.get_height() - 470) // 2 + 14 + 114 * y, 100, 100, 6, 'empty')
+        if size > 0:
+            roundedRect((screen.get_width() - 470) // 2 + 14 + 114 * x + offsetx + 50 - size // 2, (screen.get_height() - 470) // 2 + 14 + 114 * y + offsety + 50 - size // 2, size, size, 6, 'empty' if not self.value else str(self.value) if self.value <= 2048 else 'super')
+        if self.value and size > 0:
             if self.value < 128:
                 text = font55.render(str(self.value), True, colors['darktext'] if self.value < 8 else colors['lighttext'])
             elif self.value < 1024:
@@ -149,15 +220,17 @@ class Tile:
                 text = font35.render(str(self.value), True, colors['darktext'] if self.value < 8 else colors['lighttext'])
             else:
                 text = font30.render(str(self.value), True, colors['darktext'] if self.value < 8 else colors['lighttext'])
-            screen.blit(text, text.get_rect(center = ((screen.get_width() - 470) // 2 + 114 * x + 64, (screen.get_height() - 470) // 2 + 114 * y + 64)))
+            screen.blit(text, text.get_rect(center = ((screen.get_width() - 470) // 2 + 114 * x + 64 + offsetx, (screen.get_height() - 470) // 2 + 114 * y + 64 + offsety)))
 
 grid = [[Tile(x, y, None) for x in range(4)] for y in range(4)]
 
 s1 = randint(0, 15)
 s2 = randint(0, 15)
-while s2 == s1: s2 = randint(0, 16)
+while s2 == s1: s2 = randint(0, 15)
 grid[s1 // 4][s1 % 4].value = 2 if randint(0, 99) < 90 else 4
 grid[s2 // 4][s2 % 4].value = 2 if randint(0, 99) < 90 else 4
+grid[s1 // 4][s1 % 4].new = animSpeed + animSpeed
+grid[s2 // 4][s2 % 4].new = animSpeed + animSpeed
 
 while True:
     clock.tick(60)
@@ -169,12 +242,23 @@ while True:
             elif event.key == pygame.K_UP: grid = moveUp(grid)
             elif event.key == pygame.K_DOWN: moveDown(grid)
 
+    for y in range(4):
+        for x in range(4):
+            if grid[y][x].new != 0: grid[y][x].new -= 1
+            if grid[y][x].moving != -1:
+                grid[y][x].timer -= 1
+                if grid[y][x].timer == 0:
+                    grid[y][x].moving = -1
+
     screen.fill(colors['background'])
 
     roundedRect((screen.get_width() - 470) // 2, (screen.get_height() - 470) // 2, 470, 470, 6, 'game')
     for y in range(4):
         for x in range(4):
-            grid[y][x].draw()
+             if grid[y][x].moving == -1: grid[y][x].draw()
+    for y in range(4):
+        for x in range(4):
+             if grid[y][x].moving != -1: grid[y][x].draw()
 
     pygame.display.flip()
 
