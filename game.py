@@ -58,10 +58,10 @@ def moveUp(grid):
     done = [[False for x in range(4)] for y in range(4)]
     for y in range(1, 4):
         for x in range(4):
-            if done[y][x] or not grid[y][x].value: continue
+            if not grid[y][x].value: continue
             ny = y - 1
             while ny >= 0 and not grid[ny][x].value: ny -= 1
-            if ny >= 0 and grid[y][x].value == grid[ny][x].value:
+            if ny >= 0 and not done[ny][x] and grid[y][x].value == grid[ny][x].value:
                 grid[ny][x].value *= 2
                 done[ny][x] = True
                 grid[y][x].value = None
@@ -88,10 +88,10 @@ def moveDown(grid):
     done = [[False for x in range(4)] for y in range(4)]
     for y in range(2, -1, -1):
         for x in range(4):
-            if done[y][x] or not grid[y][x].value: continue
+            if not grid[y][x].value: continue
             ny = y + 1
             while ny < 4 and not grid[ny][x].value: ny += 1
-            if ny < 4 and grid[y][x].value == grid[ny][x].value:
+            if ny < 4 and not done[ny][x] and grid[y][x].value == grid[ny][x].value:
                 grid[ny][x].value *= 2
                 done[ny][x] = True
                 grid[y][x].value = None
@@ -118,10 +118,10 @@ def moveLeft(grid):
     done = [[False for x in range(4)] for y in range(4)]
     for x in range(1, 4):
         for y in range(4):
-            if done[y][x] or not grid[y][x].value: continue
+            if not grid[y][x].value: continue
             nx = x - 1
             while nx >= 0 and not grid[y][nx].value: nx -= 1
-            if nx >= 0 and grid[y][x].value == grid[y][nx].value:
+            if nx >= 0 and not done[y][nx] and grid[y][x].value == grid[y][nx].value:
                 grid[y][nx].value *= 2
                 done[y][nx] = True
                 grid[y][x].value = None
@@ -148,10 +148,10 @@ def moveRight(grid):
     done = [[False for x in range(4)] for y in range(4)]
     for x in range(2, -1, -1):
         for y in range(4):
-            if done[y][x] or not grid[y][x].value: continue
+            if not grid[y][x].value: continue
             nx = x + 1
             while nx < 4 and not grid[y][nx].value: nx += 1
-            if nx < 4 and grid[y][x].value == grid[y][nx].value:
+            if nx < 4 and not done[y][nx] and grid[y][x].value == grid[y][nx].value:
                 grid[y][nx].value *= 2
                 done[y][nx] = True
                 grid[y][x].value = None
@@ -246,8 +246,6 @@ def gameLoop(grid, screen):
                 if grid[y][x].timer == 0:
                     grid[y][x].moving = -1
 
-    screen.fill(colors['background'])
-
     roundedRect((screen.get_width() - 470) // 2, (screen.get_height() - 470) // 2, 470, 470, 6, 'game')
     for y in range(4):
         for x in range(4):
@@ -255,5 +253,3 @@ def gameLoop(grid, screen):
     for y in range(4):
         for x in range(4):
             if grid[y][x].moving != -1: grid[y][x].draw()
-
-    pygame.display.flip()
