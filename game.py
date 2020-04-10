@@ -1,40 +1,44 @@
-import os
-os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = 'hide'
 import sys, random, pygame
 from random import randint
 from pygame import gfxdraw, Rect, Color
 
-pygame.init()
-clock = pygame.time.Clock()
-size = width, height = 800, 600
-screen = pygame.display.set_mode(size)
-pygame.display.set_caption('2048 AI')
+screen = None
 
-animSpeed = 5
+animSpeed = None
 
-font55 = pygame.font.Font('font.ttf', 55)
-font45 = pygame.font.Font('font.ttf', 45)
-font35 = pygame.font.Font('font.ttf', 35)
-font30 = pygame.font.Font('font.ttf', 30)
-colors = {
-    'background': (250, 248, 239),
-    'game': (187,173,160),
-    'empty': (205, 192, 180),
-    '2': (238, 228, 218),
-    '4': (237, 224, 200),
-    '8': (242, 177, 121),
-    '16': (245, 149, 99),
-    '32': (246, 124, 95),
-    '64': (246, 94, 59),
-    '128': (237, 207, 114),
-    '256': (237, 204, 97),
-    '512': (237, 200, 80),
-    '1024': (237, 197, 63),
-    '2048': (237, 194, 46),
-    'super': (60, 58, 50),
-    'darktext': (119, 110, 101),
-    'lighttext': (249, 246, 242)
-}
+font55 = None
+font45 = None
+font35 = None
+font30 = None
+colors = None
+
+def initConstants(scr):
+    global screen, animSpeed, font55, font45, font35, font30, colors
+    screen = scr
+    animSpeed = 5
+    font55 = pygame.font.Font('font.ttf', 55)
+    font45 = pygame.font.Font('font.ttf', 45)
+    font35 = pygame.font.Font('font.ttf', 35)
+    font30 = pygame.font.Font('font.ttf', 30)
+    colors = {
+        'background': (250, 248, 239),
+        'game': (187,173,160),
+        'empty': (205, 192, 180),
+        '2': (238, 228, 218),
+        '4': (237, 224, 200),
+        '8': (242, 177, 121),
+        '16': (245, 149, 99),
+        '32': (246, 124, 95),
+        '64': (246, 94, 59),
+        '128': (237, 207, 114),
+        '256': (237, 204, 97),
+        '512': (237, 200, 80),
+        '1024': (237, 197, 63),
+        '2048': (237, 194, 46),
+        'super': (60, 58, 50),
+        'darktext': (119, 110, 101),
+        'lighttext': (249, 246, 242)
+    }
 
 def roundedRect(x, y, width, height, radius, color):
     pygame.draw.rect(screen, colors[color], Rect(x, y + radius, width, height - radius - radius))
@@ -200,17 +204,17 @@ class Tile:
         if self.moving != -1:
             my = self.moving // 4
             mx = self.moving % 4
-            if y == my:
-                mx -= x
+            if self.y == my:
+                mx -= self.x
                 offsetx = (mx * 114 - 14) * self.timer // animSpeed
-            elif x == mx:
-                my -= y
+            elif self.x == mx:
+                my -= self.y
                 offsety = (my * 114 - 14) * self.timer // animSpeed
 
         size = 100 * max(animSpeed - self.new, 0) // animSpeed
-        roundedRect((screen.get_width() - 470) // 2 + 14 + 114 * x, (screen.get_height() - 470) // 2 + 14 + 114 * y, 100, 100, 6, 'empty')
+        roundedRect((screen.get_width() - 470) // 2 + 14 + 114 * self.x, (screen.get_height() - 470) // 2 + 14 + 114 * self.y, 100, 100, 6, 'empty')
         if size > 0:
-            roundedRect((screen.get_width() - 470) // 2 + 14 + 114 * x + offsetx + 50 - size // 2, (screen.get_height() - 470) // 2 + 14 + 114 * y + offsety + 50 - size // 2, size, size, 6, 'empty' if not self.value else str(self.value) if self.value <= 2048 else 'super')
+            roundedRect((screen.get_width() - 470) // 2 + 14 + 114 * self.x + offsetx + 50 - size // 2, (screen.get_height() - 470) // 2 + 14 + 114 * self.y + offsety + 50 - size // 2, size, size, 6, 'empty' if not self.value else str(self.value) if self.value <= 2048 else 'super')
         if self.value and size > 0:
             if self.value < 128:
                 text = font55.render(str(self.value), True, colors['darktext'] if self.value < 8 else colors['lighttext'])
@@ -220,27 +224,19 @@ class Tile:
                 text = font35.render(str(self.value), True, colors['darktext'] if self.value < 8 else colors['lighttext'])
             else:
                 text = font30.render(str(self.value), True, colors['darktext'] if self.value < 8 else colors['lighttext'])
-            screen.blit(text, text.get_rect(center = ((screen.get_width() - 470) // 2 + 114 * x + 64 + offsetx, (screen.get_height() - 470) // 2 + 114 * y + 64 + offsety)))
+            screen.blit(text, text.get_rect(center = ((screen.get_width() - 470) // 2 + 114 * self.x + 64 + offsetx, (screen.get_height() - 470) // 2 + 114 * self.y + 64 + offsety)))
 
-grid = [[Tile(x, y, None) for x in range(4)] for y in range(4)]
+def spawnFirstTiles(grid):
+    s1 = randint(0, 15)
+    s2 = randint(0, 15)
+    while s2 == s1: s2 = randint(0, 15)
+    grid[s1 // 4][s1 % 4].value = 2 if randint(0, 99) < 90 else 4
+    grid[s2 // 4][s2 % 4].value = 2 if randint(0, 99) < 90 else 4
+    grid[s1 // 4][s1 % 4].new = animSpeed + animSpeed
+    grid[s2 // 4][s2 % 4].new = animSpeed + animSpeed
+    return grid
 
-s1 = randint(0, 15)
-s2 = randint(0, 15)
-while s2 == s1: s2 = randint(0, 15)
-grid[s1 // 4][s1 % 4].value = 2 if randint(0, 99) < 90 else 4
-grid[s2 // 4][s2 % 4].value = 2 if randint(0, 99) < 90 else 4
-grid[s1 // 4][s1 % 4].new = animSpeed + animSpeed
-grid[s2 // 4][s2 % 4].new = animSpeed + animSpeed
-
-while True:
-    clock.tick(60)
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT: sys.exit()
-        elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_LEFT: moveLeft(grid)
-            elif event.key == pygame.K_RIGHT: moveRight(grid)
-            elif event.key == pygame.K_UP: grid = moveUp(grid)
-            elif event.key == pygame.K_DOWN: moveDown(grid)
+def gameLoop(grid, screen):
 
     for y in range(4):
         for x in range(4):
@@ -255,10 +251,9 @@ while True:
     roundedRect((screen.get_width() - 470) // 2, (screen.get_height() - 470) // 2, 470, 470, 6, 'game')
     for y in range(4):
         for x in range(4):
-             if grid[y][x].moving == -1: grid[y][x].draw()
+            if grid[y][x].moving == -1: grid[y][x].draw()
     for y in range(4):
         for x in range(4):
-             if grid[y][x].moving != -1: grid[y][x].draw()
+            if grid[y][x].moving != -1: grid[y][x].draw()
 
     pygame.display.flip()
-
