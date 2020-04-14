@@ -34,6 +34,18 @@ class Game:
             'lighttext': (249, 246, 242)
         }
 
+    def isGameOver(self):
+        for y in range(4):
+            for x in range(4):
+                if not self.grid[y][x].value:
+                    return False
+        for y in range(4):
+            for x in range(4):
+                if y < 3 and self.grid[y][x].value == self.grid[y+1][x].value: return False
+                if x < 3 and self.grid[y][x].value == self.grid[y][x+1].value: return False
+        return True
+        
+
     def roundedRect(self, x, y, width, height, radius, color):
         pygame.draw.rect(self.screen, self.colors[color], Rect(x, y + radius, width, height - radius - radius))
         pygame.draw.rect(self.screen, self.colors[color], Rect(x + radius, y, width - radius - radius, height))
@@ -204,7 +216,6 @@ class Game:
         for y in range(4):
             for x in range(4):
                 if self.grid[y][x].moving != -1: self.grid[y][x].draw()
-
 class Tile:
     moving = -1
     timer = 0

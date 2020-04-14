@@ -13,6 +13,7 @@ class Main:
         self.game = Game(self.screen)    
         self.aiEnabled = False
         self.aiThread = None
+        self.gameover = False
         self.loop(self.screen)
 
     def processAI(self):
@@ -39,7 +40,7 @@ class Main:
     def processEvents(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT: sys.exit()
-            elif event.type == pygame.KEYDOWN:
+            elif event.type == pygame.KEYDOWN and not self.gameover:
                 if event.key == pygame.K_LEFT and not self.aiEnabled: self.game.moveLeft()
                 elif event.key == pygame.K_RIGHT and not self.aiEnabled: self.game.moveRight()
                 elif event.key == pygame.K_UP and not self.aiEnabled: self.game.moveUp()
@@ -51,6 +52,7 @@ class Main:
         while True:    
             clock.tick(60)
             self.processEvents()
+            self.gameover = self.game.isGameOver()
             screen.fill(self.game.colors['background'])
             self.game.iterate()
             if self.aiEnabled:
@@ -58,6 +60,12 @@ class Main:
                 screen.blit(text, text.get_rect(center=(screen.get_width() // 2, screen.get_height() - 35)))
             scoreText = self.game.font30.render('Score: %d' % self.game.score, True, self.game.colors['darktext'])
             screen.blit(scoreText, scoreText.get_rect(center=(screen.get_width() // 2, 35)))
+            if self.gameover:
+                if self.aiEnabled: self.toggleAI()
+                self.game.roundedRect((self.screen.get_width() - 470) // 2, (self.screen.get_height() - 470) // 2, 470, 470, 6, '2048')
+                text = self.game.font55.render('Game Over', True, self.game.colors['darktext'])
+                screen.blit(text, text.get_rect(center=(screen.get_width() // 2, screen.get_height() // 2)))
+
             pygame.display.flip()
 
 if __name__ == "__main__":
