@@ -1,6 +1,6 @@
-import sys, random, pygame
 from random import randint
-from pygame import gfxdraw, Rect, Color
+import pygame
+from pygame import Rect
 
 class Game:
     score = 0
@@ -8,7 +8,7 @@ class Game:
 
     def __init__(self, screen):
         self.grid = [[Tile(x, y, None, self) for x in range(4)] for y in range(4)]
-        self.spawnFirstTiles()
+        self.spawn_first_tiles()
         self.screen = screen
         self.font55 = pygame.font.Font('font.ttf', 55)
         self.font45 = pygame.font.Font('font.ttf', 45)
@@ -16,7 +16,7 @@ class Game:
         self.font30 = pygame.font.Font('font.ttf', 30)
         self.colors = {
             'background': (250, 248, 239),
-            'game': (187,173,160),
+            'game': (187, 173, 160),
             'empty': (205, 192, 180),
             '2': (238, 228, 218),
             '4': (237, 224, 200),
@@ -34,19 +34,20 @@ class Game:
             'lighttext': (249, 246, 242)
         }
 
-    def isGameOver(self):
+    def is_game_over(self):
         for y in range(4):
             for x in range(4):
                 if not self.grid[y][x].value:
                     return False
         for y in range(4):
             for x in range(4):
-                if y < 3 and self.grid[y][x].value == self.grid[y+1][x].value: return False
-                if x < 3 and self.grid[y][x].value == self.grid[y][x+1].value: return False
+                if y < 3 and self.grid[y][x].value == self.grid[y+1][x].value:
+                    return False
+                if x < 3 and self.grid[y][x].value == self.grid[y][x+1].value:
+                    return False
         return True
-        
 
-    def roundedRect(self, x, y, width, height, radius, color):
+    def rounded_rect(self, x, y, width, height, radius, color):
         pygame.draw.rect(self.screen, self.colors[color], Rect(x, y + radius, width, height - radius - radius))
         pygame.draw.rect(self.screen, self.colors[color], Rect(x + radius, y, width - radius - radius, height))
         pygame.gfxdraw.filled_circle(self.screen, x + radius, y + radius, radius, self.colors[color])
@@ -58,164 +59,177 @@ class Game:
         pygame.gfxdraw.filled_circle(self.screen, x + width - radius - 1, y + radius, radius, self.colors[color])
         pygame.gfxdraw.aacircle(self.screen, x + width - radius - 1, y + radius, radius, self.colors[color])
 
-    def moveUp(self):
-        newDir = [[-1 for x in range(4)] for y in range(4)]
+    def move_up(self):
+        new_dir = [[-1 for x in range(4)] for y in range(4)]
         changed = False
         done = [[False for x in range(4)] for y in range(4)]
         for y in range(1, 4):
             for x in range(4):
-                if not self.grid[y][x].value: continue
-                ny = y - 1
-                while ny >= 0 and not self.grid[ny][x].value: ny -= 1
-                if ny >= 0 and not done[ny][x] and self.grid[y][x].value == self.grid[ny][x].value:
-                    self.grid[ny][x].value *= 2
-                    self.score += self.grid[ny][x].value
-                    done[ny][x] = True
+                if not self.grid[y][x].value:
+                    continue
+                nexty = y - 1
+                while nexty >= 0 and not self.grid[nexty][x].value:
+                    nexty -= 1
+                if nexty >= 0 and not done[nexty][x] and self.grid[y][x].value == self.grid[nexty][x].value:
+                    self.grid[nexty][x].value *= 2
+                    self.score += self.grid[nexty][x].value
+                    done[nexty][x] = True
                     self.grid[y][x].value = None
                     changed = True
-                    newDir[ny][x] = y * 4 + x
-                elif y != ny + 1:
-                    self.grid[ny + 1][x].value = self.grid[y][x].value
+                    new_dir[nexty][x] = y * 4 + x
+                elif y != nexty + 1:
+                    self.grid[nexty + 1][x].value = self.grid[y][x].value
                     self.grid[y][x].value = None
                     changed = True
-                    newDir[ny + 1][x] = y * 4 + x
+                    new_dir[nexty + 1][x] = y * 4 + x
         if changed:
-            self.resetTimer()
+            self.reset_timer()
             for y in range(4):
                 for x in range(4):
-                    if newDir[y][x] != -1:
-                        self.grid[y][x].moving = newDir[y][x]
+                    if new_dir[y][x] != -1:
+                        self.grid[y][x].moving = new_dir[y][x]
                         self.grid[y][x].timer = self.animSpeed
-            self.spawnTile()
-        
-    def moveDown(self):
-        newDir = [[-1 for x in range(4)] for y in range(4)]
+            self.spawn_tile()
+
+    def move_down(self):
+        new_dir = [[-1 for x in range(4)] for y in range(4)]
         changed = False
         done = [[False for x in range(4)] for y in range(4)]
         for y in range(2, -1, -1):
             for x in range(4):
-                if not self.grid[y][x].value: continue
-                ny = y + 1
-                while ny < 4 and not self.grid[ny][x].value: ny += 1
-                if ny < 4 and not done[ny][x] and self.grid[y][x].value == self.grid[ny][x].value:
-                    self.grid[ny][x].value *= 2
-                    self.score += self.grid[ny][x].value
-                    done[ny][x] = True
+                if not self.grid[y][x].value:
+                    continue
+                nexty = y + 1
+                while nexty < 4 and not self.grid[nexty][x].value:
+                    nexty += 1
+                if nexty < 4 and not done[nexty][x] and self.grid[y][x].value == self.grid[nexty][x].value:
+                    self.grid[nexty][x].value *= 2
+                    self.score += self.grid[nexty][x].value
+                    done[nexty][x] = True
                     self.grid[y][x].value = None
                     changed = True
-                    newDir[ny][x] = y * 4 + x
-                elif y != ny - 1:
-                    self.grid[ny - 1][x].value = self.grid[y][x].value
+                    new_dir[nexty][x] = y * 4 + x
+                elif y != nexty - 1:
+                    self.grid[nexty - 1][x].value = self.grid[y][x].value
                     self.grid[y][x].value = None
                     changed = True
-                    newDir[ny - 1][x] = y * 4 + x
+                    new_dir[nexty - 1][x] = y * 4 + x
         if changed:
-            self.resetTimer()
+            self.reset_timer()
             for y in range(4):
                 for x in range(4):
-                    if newDir[y][x] != -1:
-                        self.grid[y][x].moving = newDir[y][x]
+                    if new_dir[y][x] != -1:
+                        self.grid[y][x].moving = new_dir[y][x]
                         self.grid[y][x].timer = self.animSpeed
-            self.spawnTile()
-        
-    def moveLeft(self):
-        newDir = [[-1 for x in range(4)] for y in range(4)]
+            self.spawn_tile()
+
+    def move_left(self):
+        new_dir = [[-1 for x in range(4)] for y in range(4)]
         changed = False
         done = [[False for x in range(4)] for y in range(4)]
         for x in range(1, 4):
             for y in range(4):
-                if not self.grid[y][x].value: continue
-                nx = x - 1
-                while nx >= 0 and not self.grid[y][nx].value: nx -= 1
-                if nx >= 0 and not done[y][nx] and self.grid[y][x].value == self.grid[y][nx].value:
-                    self.grid[y][nx].value *= 2
-                    self.score += self.grid[y][nx].value
-                    done[y][nx] = True
+                if not self.grid[y][x].value:
+                    continue
+                nextx = x - 1
+                while nextx >= 0 and not self.grid[y][nextx].value:
+                    nextx -= 1
+                if nextx >= 0 and not done[y][nextx] and self.grid[y][x].value == self.grid[y][nextx].value:
+                    self.grid[y][nextx].value *= 2
+                    self.score += self.grid[y][nextx].value
+                    done[y][nextx] = True
                     self.grid[y][x].value = None
                     changed = True
-                    newDir[y][nx] = y * 4 + x
-                elif x != nx + 1:
-                    self.grid[y][nx + 1].value = self.grid[y][x].value
+                    new_dir[y][nextx] = y * 4 + x
+                elif x != nextx + 1:
+                    self.grid[y][nextx + 1].value = self.grid[y][x].value
                     self.grid[y][x].value = None
                     changed = True
-                    newDir[y][nx + 1] = y * 4 + x
+                    new_dir[y][nextx + 1] = y * 4 + x
         if changed:
-            self.resetTimer()
+            self.reset_timer()
             for y in range(4):
                 for x in range(4):
-                    if newDir[y][x] != -1:
-                        self.grid[y][x].moving = newDir[y][x]
+                    if new_dir[y][x] != -1:
+                        self.grid[y][x].moving = new_dir[y][x]
                         self.grid[y][x].timer = self.animSpeed
-            self.spawnTile()
+            self.spawn_tile()
 
-    def moveRight(self):
-        newDir = [[-1 for x in range(4)] for y in range(4)]
+    def move_right(self):
+        new_dir = [[-1 for x in range(4)] for y in range(4)]
         changed = False
         done = [[False for x in range(4)] for y in range(4)]
         for x in range(2, -1, -1):
             for y in range(4):
-                if not self.grid[y][x].value: continue
-                nx = x + 1
-                while nx < 4 and not self.grid[y][nx].value: nx += 1
-                if nx < 4 and not done[y][nx] and self.grid[y][x].value == self.grid[y][nx].value:
-                    self.grid[y][nx].value *= 2
-                    self.score += self.grid[y][nx].value
-                    done[y][nx] = True
+                if not self.grid[y][x].value:
+                    continue
+                nextx = x + 1
+                while nextx < 4 and not self.grid[y][nextx].value:
+                    nextx += 1
+                if nextx < 4 and not done[y][nextx] and self.grid[y][x].value == self.grid[y][nextx].value:
+                    self.grid[y][nextx].value *= 2
+                    self.score += self.grid[y][nextx].value
+                    done[y][nextx] = True
                     self.grid[y][x].value = None
                     changed = True
-                    newDir[y][nx] = y * 4 + x
-                elif x != nx - 1:
-                    self.grid[y][nx - 1].value = self.grid[y][x].value
+                    new_dir[y][nextx] = y * 4 + x
+                elif x != nextx - 1:
+                    self.grid[y][nextx - 1].value = self.grid[y][x].value
                     self.grid[y][x].value = None
                     changed = True
-                    newDir[y][nx - 1] = y * 4 + x
+                    new_dir[y][nextx - 1] = y * 4 + x
         if changed:
-            self.resetTimer()
+            self.reset_timer()
             for y in range(4):
                 for x in range(4):
-                    if newDir[y][x] != -1:
-                        self.grid[y][x].moving = newDir[y][x]
+                    if new_dir[y][x] != -1:
+                        self.grid[y][x].moving = new_dir[y][x]
                         self.grid[y][x].timer = self.animSpeed
-            self.spawnTile()
+            self.spawn_tile()
 
-    def spawnTile(self):
+    def spawn_tile(self):
         new = randint(0, 15)
-        while self.grid[new // 4][new % 4].value: new = randint(0, 15)
+        while self.grid[new // 4][new % 4].value:
+            new = randint(0, 15)
         self.grid[new // 4][new % 4].value = 2 if randint(0, 99) < 90 else 4
         self.grid[new // 4][new % 4].new = self.animSpeed + self.animSpeed
 
-    def resetTimer(self):
+    def reset_timer(self):
         for y in range(4):
             for x in range(4):
                 self.grid[y][x].moving = -1
                 self.grid[y][x].timer = 0
                 self.grid[y][x].new = 0
 
-    def spawnFirstTiles(self):
-        s1 = randint(0, 15)
-        s2 = randint(0, 15)
-        while s2 == s1: s2 = randint(0, 15)
-        self.grid[s1 // 4][s1 % 4].value = 2 if randint(0, 99) < 90 else 4
-        self.grid[s2 // 4][s2 % 4].value = 2 if randint(0, 99) < 90 else 4
-        self.grid[s1 // 4][s1 % 4].new = self.animSpeed + self.animSpeed
-        self.grid[s2 // 4][s2 % 4].new = self.animSpeed + self.animSpeed
+    def spawn_first_tiles(self):
+        pos1 = randint(0, 15)
+        pos2 = randint(0, 15)
+        while pos2 == pos1:
+            pos2 = randint(0, 15)
+        self.grid[pos1 // 4][pos1 % 4].value = 2 if randint(0, 99) < 90 else 4
+        self.grid[pos2 // 4][pos2 % 4].value = 2 if randint(0, 99) < 90 else 4
+        self.grid[pos1 // 4][pos1 % 4].new = self.animSpeed + self.animSpeed
+        self.grid[pos2 // 4][pos2 % 4].new = self.animSpeed + self.animSpeed
 
     def iterate(self):
         for y in range(4):
             for x in range(4):
-                if self.grid[y][x].new != 0: self.grid[y][x].new -= 1
+                if self.grid[y][x].new != 0:
+                    self.grid[y][x].new -= 1
                 if self.grid[y][x].moving != -1:
                     self.grid[y][x].timer -= 1
                     if self.grid[y][x].timer == 0:
                         self.grid[y][x].moving = -1
 
-        self.roundedRect((self.screen.get_width() - 470) // 2, (self.screen.get_height() - 470) // 2, 470, 470, 6, 'game')
+        self.rounded_rect((self.screen.get_width() - 470) // 2, (self.screen.get_height() - 470) // 2, 470, 470, 6, 'game')
         for y in range(4):
             for x in range(4):
-                if self.grid[y][x].moving == -1: self.grid[y][x].draw()
+                if self.grid[y][x].moving == -1:
+                    self.grid[y][x].draw()
         for y in range(4):
             for x in range(4):
-                if self.grid[y][x].moving != -1: self.grid[y][x].draw()
+                if self.grid[y][x].moving != -1:
+                    self.grid[y][x].draw()
 class Tile:
     moving = -1
     timer = 0
@@ -229,14 +243,14 @@ class Tile:
         offsetx = 0
         offsety = 0
         if self.moving != -1:
-            my = self.moving // 4
-            mx = self.moving % 4
-            if self.y == my:
-                mx -= self.x
-                offsetx = (mx * 114 - 14) * self.timer // self.game.animSpeed
-            elif self.x == mx:
-                my -= self.y
-                offsety = (my * 114 - 14) * self.timer // self.game.animSpeed
+            movey = self.moving // 4
+            movex = self.moving % 4
+            if self.y == movey:
+                movex -= self.x
+                offsetx = (movex * 114 - 14) * self.timer // self.game.animSpeed
+            elif self.x == movex:
+                movey -= self.y
+                offsety = (movey * 114 - 14) * self.timer // self.game.animSpeed
 
         size = 100 * max(self.game.animSpeed - self.new, 0) // self.game.animSpeed
         self.game.roundedRect((self.game.screen.get_width() - 470) // 2 + 14 + 114 * self.x, (self.game.screen.get_height() - 470) // 2 + 14 + 114 * self.y, 100, 100, 6, 'empty')
@@ -251,4 +265,4 @@ class Tile:
                 text = self.game.font35.render(str(self.value), True, self.game.colors['darktext'] if self.value < 8 else self.game.colors['lighttext'])
             else:
                 text = self.game.font30.render(str(self.value), True, self.game.colors['darktext'] if self.value < 8 else self.game.colors['lighttext'])
-            self.game.screen.blit(text, text.get_rect(center = ((self.game.screen.get_width() - 470) // 2 + 114 * self.x + 64 + offsetx, (self.game.screen.get_height() - 470) // 2 + 114 * self.y + 64 + offsety)))
+            self.game.screen.blit(text, text.get_rect(center=((self.game.screen.get_width() - 470) // 2 + 114 * self.x + 64 + offsetx, (self.game.screen.get_height() - 470) // 2 + 114 * self.y + 64 + offsety)))
