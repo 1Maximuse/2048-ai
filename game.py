@@ -1,5 +1,6 @@
 from random import randint
 import pygame
+import pygame.gfxdraw
 from pygame import Rect
 
 class Game:
@@ -253,9 +254,9 @@ class Tile:
                 offsety = (movey * 114 - 14) * self.timer // self.game.animSpeed
 
         size = 100 * max(self.game.animSpeed - self.new, 0) // self.game.animSpeed
-        self.game.roundedRect((self.game.screen.get_width() - 470) // 2 + 14 + 114 * self.x, (self.game.screen.get_height() - 470) // 2 + 14 + 114 * self.y, 100, 100, 6, 'empty')
+        self.game.rounded_rect((self.game.screen.get_width() - 470) // 2 + 14 + 114 * self.x, (self.game.screen.get_height() - 470) // 2 + 14 + 114 * self.y, 100, 100, 6, 'empty')
         if size > 0:
-            self.game.roundedRect((self.game.screen.get_width() - 470) // 2 + 14 + 114 * self.x + offsetx + 50 - size // 2, (self.game.screen.get_height() - 470) // 2 + 14 + 114 * self.y + offsety + 50 - size // 2, size, size, 6, 'empty' if not self.value else str(self.value) if self.value <= 2048 else 'super')
+            self.game.rounded_rect((self.game.screen.get_width() - 470) // 2 + 14 + 114 * self.x + offsetx + 50 - size // 2, (self.game.screen.get_height() - 470) // 2 + 14 + 114 * self.y + offsety + 50 - size // 2, size, size, 6, 'empty' if not self.value else str(self.value) if self.value <= 2048 else 'super')
         if self.value and size > 0:
             if self.value < 128:
                 text = self.game.font55.render(str(self.value), True, self.game.colors['darktext'] if self.value < 8 else self.game.colors['lighttext'])
