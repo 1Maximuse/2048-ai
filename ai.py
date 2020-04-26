@@ -93,3 +93,83 @@ def calculate_next_move(grid):
     numgrid = convert_to_numgrid(grid)
     tree = []
     tree = build_minimax_tree(numgrid, 0, 2)
+
+def calculate_empty_tiles(grid):
+    E = 0
+    for x in range(4):
+        for y in range(4):
+            if (grid[x][y].value == None)
+                E+=1
+    return E
+
+def calculate_adjecent_differences(grid):
+    D = 0
+    for x in range(4):
+        for y in range(3):
+            D = D + abs(grid[x][y].value - grid[x][y+1].value)
+    for y in range(4):
+        for x in range(3):
+            E = D + abs(grid[x][y].value - grid[x+1][y].value)
+    return D
+
+def calculate_middle_value(grid):
+    M = grid[1][1].value + grid[1][2].value + grid[2][1].value + grid[2][2].value
+    return M
+
+def calculate_heuristic_value(grid):
+    A = 1000
+    B = 10
+    C = 10
+    E = calculate_empty_tiles(grid)
+    D = calculate_adjecent_differences(grid)
+    M = calculate_middle_value(grid)
+    H = A * E - B * D - C * M
+    return H
+
+def minimax(node, depth, turn): # depth mau berapa banyak search kedalamannya
+    if depth == 0 # leaf node
+        return calculate_heuristic_value
+    if turn == 1 # player turn
+        bestValue = -999999
+        for # each child of node
+            val = minimax(child, depth - 1, 2)
+            bestValue = max(bestValue, val)
+        return bestValue
+    else
+        bestValue = +999999
+        for # each child of node
+            val = minimax(child, depth - 1, 1)
+            bestValue = min(bestValue, val)
+        return bestValue
+
+def alfabeta_pruning(node, depth, alfa, beta, turn): # depth mau berapa banyak search kedalamannya
+    if depth == 0 # leaf node
+        return calculate_heuristic_value
+    if turn == 1 # player turn
+        for # each child of node
+            alfa = max(alfa, alphabeta_pruning(child, depth - 1, alfa, beta, 2))
+            if alfa > beta
+                break
+        return alfa
+    else
+        for # each child of node
+            beta = min(beta, alphabeta_pruning(child, depth - 1, alfa, beta, 1))
+            if beta < alfa
+                break
+        return beta
+
+def expectimax(node, depth, turn): # depth mau berapa banyak search kedalamannya
+    if depth == 0 # leaf node
+        return calculate_heuristic_value
+    if turn == 1 # player turn
+        bestValue = -999999
+        for # each child of node
+            val = expectimax(child, depth - 1, 2)
+            bestValue = max(bestValue, val)
+        return bestValue
+    else
+        expectedValue = 0
+        for # each child of node
+            val = expectimax(child, depth - 1, 1)
+            expectedValue += Probability[child] * val
+        return expectedValue
