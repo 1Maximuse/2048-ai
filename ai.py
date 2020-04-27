@@ -63,21 +63,106 @@ def try_move(grid, direction):
     return bisa
 
 def move(grid, direction):
-    # TODO
+    combined = [[False for x in range(4)] for y in range(4)]
+    if direction == 0:
+        for y in range(1, 4):
+            for x in range(4):
+                if grid[y][x] is None:
+                    continue
+                dy = y
+                while (dy >= 0):
+                    dy -= 1
+                    if grid[dy][x] and grid[dy][x] != grid[y][x]:
+                        break
+                dy += 1
+                if dy == y:
+                    continue
+                if grid[dy][x] == grid[y][x] and not combined[dy][x]:
+                    grid[dy][x] *= 2
+                    grid[y][x] = None
+                    combined[dy][x] = True
+                elif grid[dy][x] is None:
+                    grid[dy][x] = grid[y][x]
+                    grid[y][x] = None
+    if direction == 1:
+        for y in range(2, -1, -1):
+            for x in range(4):
+                if grid[y][x] is None:
+                    continue
+                dy = y
+                while (dy < 4):
+                    dy += 1
+                    if grid[dy][x] and grid[dy][x] != grid[y][x]:
+                        break
+                dy -= 1
+                if dy == y:
+                    continue
+                if grid[dy][x] == grid[y][x] and not combined[dy][x]:
+                    grid[dy][x] *= 2
+                    grid[y][x] = None
+                    combined[dy][x] = True
+                elif grid[dy][x] is None:
+                    grid[dy][x] = grid[y][x]
+                    grid[y][x] = None
+    if direction == 2:
+        for x in range(1, 4):
+            for y in range(4):
+                if grid[y][x] is None:
+                    continue
+                dx = x
+                while (dx >= 0):
+                    dx -= 1
+                    if grid[y][dx] and grid[y][dx] != grid[y][x]:
+                        break
+                dx += 1
+                if dx == x:
+                    continue
+                if grid[y][dx] == grid[y][x] and not combined[y][dx]:
+                    grid[y][dx] *= 2
+                    grid[y][x] = None
+                    combined[y][dx] = True
+                elif grid[y][dx] is None:
+                    grid[y][dx] = grid[y][x]
+                    grid[y][x] = None
+    if direction == 3:
+        for x in range(2, -1, -1):
+            for y in range(4):
+                if grid[y][x] is None:
+                    continue
+                dx = x
+                while (dx < 4):
+                    dx += 1
+                    if grid[y][dx] and grid[y][dx] != grid[y][x]:
+                        break
+                dx -= 1
+                if dx == x:
+                    continue
+                if grid[y][dx] == grid[y][x] and not combined[y][dx]:
+                    grid[y][dx] *= 2
+                    grid[y][x] = None
+                    combined[y][dx] = True
+                elif grid[y][dx] is None:
+                    grid[y][dx] = grid[y][x]
+                    grid[y][x] = None
     return grid
 
-def build_minimax_tree(grid, depth, max_depth):
+def spawn_tile(grid, x, y, value):
+    grid[y][x] = value
+    return grid
+
+def build_tree(grid, depth, max_depth):
     if depth == max_depth:
         return Tree(grid)
     root = Tree(grid)
     if depth % 2 == 0: # player turn
         for i in range(4):
             if try_move(grid, i):
-                root.append_child(build_minimax_tree(move(grid, i), depth + 1, max_depth))
-    # else: # computer turn
-    #     for y in range(4):
-    #         for x in range(4):
-    #             TODO
+                root.append_child(build_tree(move(grid.copy(), i), depth + 1, max_depth))
+    else: # computer turn
+        for y in range(4):
+            for x in range(4):
+                if grid[y][x] is None:
+                    root.append_child(build_tree(spawn_tile(grid.copy(), x, y, 2), depth + 1, max_depth))
     return root
 
 def convert_to_numgrid(grid):
@@ -92,84 +177,83 @@ def convert_to_numgrid(grid):
 def calculate_next_move(grid):
     numgrid = convert_to_numgrid(grid)
     tree = []
-    tree = build_minimax_tree(numgrid, 0, 2)
+    tree = build_tree(numgrid, 0, 2)
+    minimax(tree, 2, 1)
 
 def calculate_empty_tiles(grid):
-    E = 0
+    empty = 0
     for x in range(4):
         for y in range(4):
-            if (grid[x][y].value == None)
-                E+=1
-    return E
+            if grid[x][y].value is None:
+                empty += 1
+    return empty
 
-def calculate_adjecent_differences(grid):
-    D = 0
+def calculate_adjacent_differences(grid):
+    diff = 0
     for x in range(4):
         for y in range(3):
-            D = D + abs(grid[x][y].value - grid[x][y+1].value)
+            diff += abs(grid[x][y].value - grid[x][y+1].value)
     for y in range(4):
         for x in range(3):
-            E = D + abs(grid[x][y].value - grid[x+1][y].value)
-    return D
+            diff += abs(grid[x][y].value - grid[x+1][y].value)
+    return diff
 
 def calculate_middle_value(grid):
-    M = grid[1][1].value + grid[1][2].value + grid[2][1].value + grid[2][2].value
-    return M
+    return grid[1][1].value + grid[1][2].value + grid[2][1].value + grid[2][2].value
 
 def calculate_heuristic_value(grid):
-    A = 1000
-    B = 10
-    C = 10
-    E = calculate_empty_tiles(grid)
-    D = calculate_adjecent_differences(grid)
-    M = calculate_middle_value(grid)
-    H = A * E - B * D - C * M
-    return H
+    weight_empty_tiles = 1000
+    weight_adjacent_differences = 10
+    weight_middle_value = 10
+    empty_tiles = calculate_empty_tiles(grid)
+    adjacent_differences = calculate_adjacent_differences(grid)
+    middle_value = calculate_middle_value(grid)
+    return weight_empty_tiles * empty_tiles - weight_adjacent_differences * adjacent_differences - weight_middle_value * middle_value
 
 def minimax(node, depth, turn): # depth mau berapa banyak search kedalamannya
-    if depth == 0 # leaf node
-        return calculate_heuristic_value
-    if turn == 1 # player turn
-        bestValue = -999999
-        for # each child of node
+    if depth == 0: # leaf node
+        return calculate_heuristic_value(node.grid)
+    if turn == 1: # player turn
+        best_value = -999999
+        for child in node.child:
             val = minimax(child, depth - 1, 2)
-            bestValue = max(bestValue, val)
-        return bestValue
-    else
-        bestValue = +999999
-        for # each child of node
+            best_value = max(best_value, val)
+        return best_value
+    else:
+        best_value = +999999
+        for child in node.child:
             val = minimax(child, depth - 1, 1)
-            bestValue = min(bestValue, val)
-        return bestValue
+            best_value = min(best_value, val)
+        return best_value
 
-def alfabeta_pruning(node, depth, alfa, beta, turn): # depth mau berapa banyak search kedalamannya
-    if depth == 0 # leaf node
-        return calculate_heuristic_value
-    if turn == 1 # player turn
-        for # each child of node
+def alphabeta_pruning(node, depth, alfa, beta, turn): # depth mau berapa banyak search kedalamannya
+    if depth == 0: # leaf node
+        return calculate_heuristic_value(node.grid)
+    if turn == 1: # player turn
+        for child in node.child:
             alfa = max(alfa, alphabeta_pruning(child, depth - 1, alfa, beta, 2))
-            if alfa > beta
+            if alfa > beta:
                 break
         return alfa
-    else
-        for # each child of node
+    else:
+        for child in node.child:
             beta = min(beta, alphabeta_pruning(child, depth - 1, alfa, beta, 1))
-            if beta < alfa
+            if beta < alfa:
                 break
         return beta
 
 def expectimax(node, depth, turn): # depth mau berapa banyak search kedalamannya
-    if depth == 0 # leaf node
-        return calculate_heuristic_value
-    if turn == 1 # player turn
-        bestValue = -999999
-        for # each child of node
+    if depth == 0: # leaf node
+        return calculate_heuristic_value(node.grid)
+    if turn == 1: # player turn
+        best_value = -999999
+        for child in node.child:
             val = expectimax(child, depth - 1, 2)
-            bestValue = max(bestValue, val)
-        return bestValue
-    else
-        expectedValue = 0
-        for # each child of node
+            best_value = max(best_value, val)
+        return best_value
+    else:
+        expected_value = 0
+        for child in node.child:
             val = expectimax(child, depth - 1, 1)
-            expectedValue += Probability[child] * val
-        return expectedValue
+            expected_value += val / len(node.child)
+        return expected_value
