@@ -1,8 +1,10 @@
 class Tree:
     grid = []
     child = []
-    def __init__(self, grid):
+    last_move = None
+    def __init__(self, grid, last_move):
         self.grid = grid
+        self.last_move = last_move
     def append_child(self, child):
         self.child.append(child)
 
@@ -150,19 +152,20 @@ def spawn_tile(grid, x, y, value):
     grid[y][x] = value
     return grid
 
-def build_tree(grid, depth, max_depth):
+def build_tree(grid, last_move, depth, max_depth):
     if depth == max_depth:
-        return Tree(grid)
-    root = Tree(grid)
+        return Tree(grid, last_move)
+    root = Tree(grid, last_move)
     if depth % 2 == 0: # player turn
         for i in range(4):
             if try_move(grid, i):
-                root.append_child(build_tree(move(grid.copy(), i), depth + 1, max_depth))
+                root.append_child(build_tree(move(grid.copy(), i), i, depth + 1, max_depth))
     else: # computer turn
         for y in range(4):
             for x in range(4):
                 if grid[y][x] is None:
-                    root.append_child(build_tree(spawn_tile(grid.copy(), x, y, 2), depth + 1, max_depth))
+                    root.append_child(build_tree(spawn_tile(grid.copy(), x, y, 2), (x, y, 2), depth + 1, max_depth))
+                    root.append_child(build_tree(spawn_tile(grid.copy(), x, y, 4), (x, y, 4), depth + 1, max_depth))
     return root
 
 def convert_to_numgrid(grid):
@@ -176,9 +179,9 @@ def convert_to_numgrid(grid):
 
 def calculate_next_move(grid):
     numgrid = convert_to_numgrid(grid)
-    tree = []
-    tree = build_tree(numgrid, 0, 2)
-    minimax(tree, 2, 1)
+    tree = build_tree(numgrid, None, 0, 2)
+    best_value, last_move = minimax(tree, 2, 1)
+    return last_move
 
 def calculate_empty_tiles(grid):
     empty = 0
@@ -212,19 +215,25 @@ def calculate_heuristic_value(grid):
 
 def minimax(node, depth, turn): # depth mau berapa banyak search kedalamannya
     if depth == 0: # leaf node
-        return calculate_heuristic_value(node.grid)
+        return calculate_heuristic_value(node.grid), node.last_move
     if turn == 1: # player turn
         best_value = -999999
+        last_move = None
         for child in node.child:
-            val = minimax(child, depth - 1, 2)
+            val, mv = minimax(child, depth - 1, 2)
+            if val > best_value:
+                best_value = val
+                last_move = mv
             best_value = max(best_value, val)
-        return best_value
     else:
         best_value = +999999
+        last_move = None
         for child in node.child:
-            val = minimax(child, depth - 1, 1)
-            best_value = min(best_value, val)
-        return best_value
+            val, mv = minimax(child, depth - 1, 1)
+            if val < best_value:
+                best_value = val
+                last_move = mv
+    return best_value, last_move
 
 def alphabeta_pruning(node, depth, alfa, beta, turn): # depth mau berapa banyak search kedalamannya
     if depth == 0: # leaf node
