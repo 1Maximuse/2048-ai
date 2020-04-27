@@ -72,10 +72,10 @@ def move(grid, direction):
                 if grid[y][x] is None:
                     continue
                 dy = y
-                while (dy >= 0):
-                    dy -= 1
+                while dy >= 0:
                     if grid[dy][x] and grid[dy][x] != grid[y][x]:
                         break
+                    dy -= 1
                 dy += 1
                 if dy == y:
                     continue
@@ -92,10 +92,10 @@ def move(grid, direction):
                 if grid[y][x] is None:
                     continue
                 dy = y
-                while (dy < 4):
-                    dy += 1
+                while dy < 4:
                     if grid[dy][x] and grid[dy][x] != grid[y][x]:
                         break
+                    dy += 1
                 dy -= 1
                 if dy == y:
                     continue
@@ -112,10 +112,10 @@ def move(grid, direction):
                 if grid[y][x] is None:
                     continue
                 dx = x
-                while (dx >= 0):
-                    dx -= 1
+                while dx >= 0:
                     if grid[y][dx] and grid[y][dx] != grid[y][x]:
                         break
+                    dx -= 1
                 dx += 1
                 if dx == x:
                     continue
@@ -132,10 +132,10 @@ def move(grid, direction):
                 if grid[y][x] is None:
                     continue
                 dx = x
-                while (dx < 4):
-                    dx += 1
+                while dx < 4:
                     if grid[y][dx] and grid[y][dx] != grid[y][x]:
                         break
+                    dx += 1
                 dx -= 1
                 if dx == x:
                     continue
@@ -156,7 +156,7 @@ def build_tree(grid, last_move, depth, max_depth):
     if depth == max_depth:
         return Tree(grid, last_move)
     root = Tree(grid, last_move)
-    if depth % 2 == 0: # player turn
+    if depth % 2 == 1: # player turn
         for i in range(4):
             if try_move(grid, i):
                 root.append_child(build_tree(move(grid.copy(), i), i, depth + 1, max_depth))
@@ -164,8 +164,8 @@ def build_tree(grid, last_move, depth, max_depth):
         for y in range(4):
             for x in range(4):
                 if grid[y][x] is None:
-                    root.append_child(build_tree(spawn_tile(grid.copy(), x, y, 2), (x, y, 2), depth + 1, max_depth))
-                    root.append_child(build_tree(spawn_tile(grid.copy(), x, y, 4), (x, y, 4), depth + 1, max_depth))
+                    root.append_child(build_tree(spawn_tile(grid.copy(), x, y, 2), None, depth + 1, max_depth))
+                    root.append_child(build_tree(spawn_tile(grid.copy(), x, y, 4), None, depth + 1, max_depth))
     return root
 
 def convert_to_numgrid(grid):
@@ -180,14 +180,13 @@ def convert_to_numgrid(grid):
 def calculate_next_move(grid):
     numgrid = convert_to_numgrid(grid)
     tree = build_tree(numgrid, None, 0, 2)
-    best_value, last_move = minimax(tree, 2, 1)
-    return last_move
+    return minimax(tree, 2, 2)[1]
 
 def calculate_empty_tiles(grid):
     empty = 0
     for x in range(4):
         for y in range(4):
-            if grid[x][y].value is None:
+            if grid[x][y] is None:
                 empty += 1
     return empty
 
@@ -195,14 +194,18 @@ def calculate_adjacent_differences(grid):
     diff = 0
     for x in range(4):
         for y in range(3):
-            diff += abs(grid[x][y].value - grid[x][y+1].value)
+            diff += abs(0 if grid[x][y] is None else grid[x][y] - 0 if grid[x][y+1] is None else grid[x][y+1])
     for y in range(4):
         for x in range(3):
-            diff += abs(grid[x][y].value - grid[x+1][y].value)
+            diff += abs(0 if grid[x][y] is None else grid[x][y] - 0 if grid[x+1][y] is None else grid[x+1][y])
     return diff
 
 def calculate_middle_value(grid):
-    return grid[1][1].value + grid[1][2].value + grid[2][1].value + grid[2][2].value
+    a11 = 0 if grid[1][1] is None else grid[1][1]
+    a12 = 0 if grid[1][2] is None else grid[1][2]
+    a21 = 0 if grid[2][1] is None else grid[2][1]
+    a22 = 0 if grid[2][2] is None else grid[2][2]
+    return a11 + a12 + a21 + a22
 
 def calculate_heuristic_value(grid):
     weight_empty_tiles = 1000
@@ -237,19 +240,29 @@ def minimax(node, depth, turn): # depth mau berapa banyak search kedalamannya
 
 def alphabeta_pruning(node, depth, alfa, beta, turn): # depth mau berapa banyak search kedalamannya
     if depth == 0: # leaf node
-        return calculate_heuristic_value(node.grid)
+        return calculate_heuristic_value(node.grid), node.last_move
     if turn == 1: # player turn
+        alfa = -999999
+        last_move = None
         for child in node.child:
-            alfa = max(alfa, alphabeta_pruning(child, depth - 1, alfa, beta, 2))
+            val, mv = alphabeta_pruning(child, depth - 1, alfa, beta, 2)
+            if val > alfa:
+                alfa = val
+                last_move = mv
             if alfa > beta:
                 break
-        return alfa
+        return alfa, last_move
     else:
+        beta = 999999
+        last_move = None
         for child in node.child:
-            beta = min(beta, alphabeta_pruning(child, depth - 1, alfa, beta, 1))
+            val, mv = alphabeta_pruning(child, depth - 1, alfa, beta, 1)
+            if val < beta:
+                beta = val
+                last_move = mv
             if beta < alfa:
                 break
-        return beta
+        return beta, last_move
 
 def expectimax(node, depth, turn): # depth mau berapa banyak search kedalamannya
     if depth == 0: # leaf node

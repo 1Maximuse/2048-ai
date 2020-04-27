@@ -1,7 +1,8 @@
 import sys
-from threading import Thread
+from threading import Lock, Thread
 import pygame
 from game import Game
+import ai
 
 class Main:
     def __init__(self):
@@ -12,6 +13,8 @@ class Main:
         self.game = Game(self.screen)
         self.ai_enabled = False
         self.ai_thread = None
+        self.ai_next_move = -1
+        self.lock = Lock()
         self.gameover = False
         self.loop(self.screen)
 
@@ -19,18 +22,12 @@ class Main:
         while True:
             if not self.ai_enabled:
                 break
-            # next_move = ai.calculateNextMove(self.game.grid)
-            next_move = -1
-            if next_move == 0:
-                self.game.move_up()
-            elif next_move == 1:
-                self.game.move_down()
-            elif next_move == 2:
-                self.game.move_left()
-            elif next_move == 3:
-                self.game.move_right()
-            # sleep(0.1)
-            break
+            if self.ai_next_move != -1:
+                continue
+            next_move = ai.calculate_next_move(self.game.grid)
+            self.lock.acquire()
+            self.ai_next_move = next_move
+            self.lock.release()
 
     def toggle_ai(self):
         self.ai_enabled = not self.ai_enabled
@@ -62,6 +59,18 @@ class Main:
         while True:
             clock.tick(60)
             self.process_events()
+            self.lock.acquire()
+            if self.ai_enabled and self.ai_next_move != -1:
+                if self.ai_next_move == 0:
+                    self.game.move_up()
+                elif self.ai_next_move == 1:
+                    self.game.move_down()
+                elif self.ai_next_move == 2:
+                    self.game.move_left()
+                elif self.ai_next_move == 3:
+                    self.game.move_right()
+                self.ai_next_move = -1
+            self.lock.release()
             self.gameover = self.game.is_game_over()
             screen.fill(self.game.colors['background'])
             self.game.iterate()
