@@ -65,11 +65,11 @@ class Main:
                     self.game.move_down()
                 elif event.key == pygame.K_SPACE:
                     self.toggle_ai()
-                elif event.key == pygame.K_0:
-                    self.ai_mode = 0
                 elif event.key == pygame.K_1:
-                    self.ai_mode = 1
+                    self.ai_mode = 0
                 elif event.key == pygame.K_2:
+                    self.ai_mode = 1
+                elif event.key == pygame.K_3:
                     self.ai_mode = 2
             elif event.type == pygame.KEYDOWN and self.gameover:
                 if event.key == pygame.K_r:
