@@ -4,6 +4,8 @@ import pygame
 from game import Game
 import ai
 
+ai_modes = ['Minimax', 'Alpha-Beta Pruning', 'Expectimax']
+
 class Main:
     def __init__(self):
         pygame.init()
@@ -12,6 +14,7 @@ class Main:
         self.screen = pygame.display.set_mode(self.size)
         self.game = Game(self.screen)
         self.ai_enabled = False
+        self.ai_mode = 0
         self.ai_thread = None
         self.ai_next_move = -1
         self.lock = Lock()
@@ -24,9 +27,9 @@ class Main:
                 break
             if self.ai_next_move != -1:
                 continue
-            next_move = ai.calculate_next_move(self.game.grid)
+            next_move = ai.calculate_next_move(self.game.grid, self.ai_mode)
             self.lock.acquire()
-            self.ai_next_move = next_move   
+            self.ai_next_move = next_move
             self.lock.release()
 
     def toggle_ai(self):
@@ -62,6 +65,12 @@ class Main:
                     self.game.move_down()
                 elif event.key == pygame.K_SPACE:
                     self.toggle_ai()
+                elif event.key == pygame.K_0:
+                    self.ai_mode = 0
+                elif event.key == pygame.K_1:
+                    self.ai_mode = 1
+                elif event.key == pygame.K_2:
+                    self.ai_mode = 2
             elif event.type == pygame.KEYDOWN and self.gameover:
                 if event.key == pygame.K_r:
                     self.retry()
@@ -87,7 +96,7 @@ class Main:
             screen.fill(self.game.colors['background'])
             self.game.iterate()
             if self.ai_enabled:
-                text = self.game.font35.render('AI Mode', True, self.game.colors['2048'])
+                text = self.game.font35.render('AI Mode: %s' % ai_modes[self.ai_mode], True, self.game.colors['2048'])
                 screen.blit(text, text.get_rect(center=(screen.get_width() // 2, screen.get_height() - 35)))
             score_text = self.game.font30.render('Score: %d' % self.game.score, True, self.game.colors['darktext'])
             screen.blit(score_text, score_text.get_rect(center=(screen.get_width() // 2, 35)))

@@ -160,13 +160,16 @@ def convert_to_numgrid(grid):
         res.append(row)
     return res
 
-def calculate_next_move(grid):
+def calculate_next_move(grid, mode):
     depth = 2
     numgrid = convert_to_numgrid(grid)
     tree = build_tree(numgrid, None, 0, depth)
-    res_path = minimax(tree, depth, 1)[1]
-    # res_path = alphabeta_pruning(tree, depth, -999999, 999999, 1)[1]
-    # res_path = expectimax(tree, depth, 1)[1]
+    if mode == 0:
+        res_path = minimax(tree, depth, 1)[1]
+    elif mode == 1:
+        res_path = alphabeta_pruning(tree, depth, -999999, 999999, 1)[1]
+    else:
+        res_path = expectimax(tree, depth, 1)[1]
     return res_path[0]
 
 def calculate_empty_tiles(grid):
