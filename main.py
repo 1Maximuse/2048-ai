@@ -26,7 +26,7 @@ class Main:
                 continue
             next_move = ai.calculate_next_move(self.game.grid)
             self.lock.acquire()
-            self.ai_next_move = next_move
+            self.ai_next_move = next_move   
             self.lock.release()
 
     def toggle_ai(self):
@@ -37,6 +37,15 @@ class Main:
             self.ai_thread.start()
         else:
             self.ai_thread = None
+
+    def retry(self):
+        self.game = Game(self.screen)
+        self.ai_enabled = False
+        self.ai_thread = None
+        self.ai_next_move = -1
+        self.lock = Lock()
+        self.gameover = False
+        self.loop(self.screen)
 
     def process_events(self):
         for event in pygame.event.get():
@@ -53,6 +62,9 @@ class Main:
                     self.game.move_down()
                 elif event.key == pygame.K_SPACE:
                     self.toggle_ai()
+            elif event.type == pygame.KEYDOWN and self.gameover:
+                if event.key == pygame.K_r:
+                    self.retry()
 
     def loop(self, screen):
         clock = pygame.time.Clock()
@@ -85,6 +97,8 @@ class Main:
                 self.game.rounded_rect((self.screen.get_width() - 470) // 2, (self.screen.get_height() - 470) // 2, 470, 470, 6, '2048')
                 text = self.game.font55.render('Game Over', True, self.game.colors['darktext'])
                 screen.blit(text, text.get_rect(center=(screen.get_width() // 2, screen.get_height() // 2)))
+                text = self.game.font30.render('Press R to retry', True, self.game.colors['darktext'])
+                screen.blit(text, text.get_rect(center=(screen.get_width() // 2, screen.get_height() // 2 + 200)))
 
             pygame.display.flip()
 
