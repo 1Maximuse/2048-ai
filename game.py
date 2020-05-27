@@ -15,6 +15,8 @@ class Game:
         self.font45 = pygame.font.Font('font.ttf', 45)
         self.font35 = pygame.font.Font('font.ttf', 35)
         self.font30 = pygame.font.Font('font.ttf', 30)
+        self.font20 = pygame.font.Font('font.ttf', 20)
+        self.font15 = pygame.font.Font('font.ttf', 15)
         self.colors = {
             'background': (250, 248, 239),
             'game': (187, 173, 160),
